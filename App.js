@@ -10,54 +10,53 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import AppContext, { AppContextProvider } from './src/utils/AppContext';
+import AppContext, {AppContextProvider} from './src/utils/AppContext';
 
-import HomeScreen from './src/screen/HomeScreen';
-import HotFilm from './src/screen/HotFilm';
-import SearchScreen from './src/screen/Search';
-import MovieDetailScreen from './src/screen/SingleFilm';
-import Profile from './src/screen/Account';
-import PaymentSceen from './src/screen/Payment';
-import LoginScreen from './src/screen/Loggin';
-import RegisterScreen from './src/screen/Register';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from './src/screen/homeScreen';
+import HotFilm from './src/screen/playlistsScreen';
+import SearchScreen from './src/screen/searchScreen';
+import MovieDetailScreen from './src/screen/filmInforScreen';
+import Profile from './src/screen/profileScreen';
+import PaymentSceen from './src/screen/paymentScreen';
+import LoginScreen from './src/screen/loginScreen';
+import RegisterScreen from './src/screen/registerScreen';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
-import { faHomeUser } from '@fortawesome/free-solid-svg-icons/faHomeUser';
-import { faHotTub } from '@fortawesome/free-solid-svg-icons/faHotTub';
-import { faSearch } from '@fortawesome/free-solid-svg-icons/faSearch';
-import { faUserCircle } from '@fortawesome/free-solid-svg-icons/faUserCircle';
+import {faHomeUser} from '@fortawesome/free-solid-svg-icons/faHomeUser';
+import {faHotTub} from '@fortawesome/free-solid-svg-icons/faHotTub';
+import {faSearch} from '@fortawesome/free-solid-svg-icons/faSearch';
+import {faUserCircle} from '@fortawesome/free-solid-svg-icons/faUserCircle';
 import i18n from './src/utils/i18n';
-import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { I18nextProvider, useTranslation } from 'react-i18next';
-import React, { useContext, useEffect, useState, useCallback } from 'react';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import {createMaterialBottomTabNavigator} from '@react-navigation/material-bottom-tabs';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {I18nextProvider, useTranslation} from 'react-i18next';
+import React, {useContext, useEffect, useState, useCallback} from 'react';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {BottomSheetModalProvider} from '@gorhom/bottom-sheet';
+import { AsyncStorageProvider } from './AsyncStorageProvider';
 
-import { setAttributes } from 'video.js/dist/types/utils/dom';
-import AuthContext, { AuthContextProvider } from './src/store/auth-context';
-import PlaylistScreen from './src/screen/PlaylistScreen';
-import PlaylistInfoScreen from './src/screen/PlaylistInfoScreen';
+import {setAttributes} from 'video.js/dist/types/utils/dom';
+import AuthContext, {AuthContextProvider} from './src/store/auth-context';
 
 const Tab = createMaterialBottomTabNavigator();
 
 const Stack = createNativeStackNavigator();
 
 const AppChild = () => {
-  const { t, i18n } = useTranslation();
+  const {t, i18n} = useTranslation();
   const appContext = useContext(AppContext);
   const [isSnackbarVisible, setIsSnackbarVisible] = useState(false);
 
   const OnHideSnackBar = () =>
-    appContext.callSnackBar({ type: null, message: null });
+    appContext.callSnackBar({type: null, message: null});
 
   useEffect(() => {
     setIsSnackbarVisible(appContext.snackBarMessage.message != null);
   }, [appContext.snackBarMessage]);
 
   useEffect(() => {
-    appContext.callSnackBar({ type: 'welcome', message: 'Have a nice day!' });
+    appContext.callSnackBar({type: 'welcome', message: 'Have a nice day!'});
   }, []);
 
   function HomeStack() {
@@ -78,9 +77,9 @@ const AppChild = () => {
           name="HomeScreen"
           component={HomeScreen}
           options={{
-            tabBarLabel: <Text style={{ color: '#2f94aa' }}>{t('home')}</Text>,
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesomeIcon style={{ color: '#2f94aa' }} icon={faHomeUser} /> // Use the icon instead of text
+            tabBarLabel: <Text style={{color: '#2f94aa'}}>{t('home')}</Text>,
+            tabBarIcon: ({color, size}) => (
+              <FontAwesomeIcon style={{color: '#2f94aa'}} icon={faHomeUser} /> // Use the icon instead of text
             ),
           }}
         />
@@ -88,9 +87,11 @@ const AppChild = () => {
           name="Hot Movies"
           component={HotFilm}
           options={{
-            tabBarLabel: <Text style={{ color: '#2f94aa' }}>{t('hot movie')}</Text>,
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesomeIcon style={{ color: '#2f94aa' }} icon={faHotTub} /> // Use the icon instead of text
+            tabBarLabel: (
+              <Text style={{color: '#2f94aa'}}>{t('hotmovie')}</Text>
+            ),
+            tabBarIcon: ({color, size}) => (
+              <FontAwesomeIcon style={{color: '#2f94aa'}} icon={faHotTub} /> // Use the icon instead of text
             ),
             tabBarVisible: false,
           }}
@@ -99,9 +100,9 @@ const AppChild = () => {
           name="Search"
           component={SearchScreen}
           options={{
-            tabBarLabel: <Text style={{ color: '#2f94aa' }}>{t('search')}</Text>,
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesomeIcon style={{ color: '#2f94aa' }} icon={faSearch} /> // Use the icon instead of text
+            tabBarLabel: <Text style={{color: '#2f94aa'}}>{t('search')}</Text>,
+            tabBarIcon: ({color, size}) => (
+              <FontAwesomeIcon style={{color: '#2f94aa'}} icon={faSearch} /> // Use the icon instead of text
             ),
           }}
         />
@@ -109,9 +110,9 @@ const AppChild = () => {
           name="Profile"
           component={Profile}
           options={{
-            tabBarLabel: <Text style={{ color: '#2f94aa' }}>{t('profile')}</Text>,
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesomeIcon style={{ color: '#2f94aa' }} icon={faUserCircle} /> // Use the icon instead of text
+            tabBarLabel: <Text style={{color: '#2f94aa'}}>{t('profile')}</Text>,
+            tabBarIcon: ({color, size}) => (
+              <FontAwesomeIcon style={{color: '#2f94aa'}} icon={faUserCircle} /> // Use the icon instead of text
             ),
           }}
         />
@@ -125,27 +126,27 @@ const AppChild = () => {
         <Stack.Screen
           name="Login"
           component={LoginScreen}
-          options={{ headerShown: false }}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Payment"
           component={PaymentSceen}
-          options={{ headerShown: false }}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Home"
           component={HomeStack}
-          options={{ headerShown: false }}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="Register"
           component={RegisterScreen}
-          options={{ headerShown: false }}
+          options={{headerShown: false}}
         />
         <Stack.Screen
           name="MovieDetail"
           component={MovieDetailScreen}
-          options={{ headerShown: false }}
+          options={{headerShown: false}}
         />
       </Stack.Navigator>
     </NavigationContainer>
@@ -154,9 +155,10 @@ const AppChild = () => {
 
 const App = () => {
   return (
+    <AsyncStorageProvider>
     <AuthContextProvider>
       <AppContextProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
+        <GestureHandlerRootView style={{flex: 1}}>
           <BottomSheetModalProvider>
             <I18nextProvider i18n={i18n}>
               <AppChild />
@@ -165,6 +167,7 @@ const App = () => {
         </GestureHandlerRootView>
       </AppContextProvider>
     </AuthContextProvider>
+    </AsyncStorageProvider>
   );
 };
 

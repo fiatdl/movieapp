@@ -1,8 +1,9 @@
 import React, { useState, useContext } from 'react';
 import Modal from 'react-native-modal';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { I18nextProvider, useTranslation } from 'react-i18next';
-import { ip, newip } from '@env'
+import { newip, ip } from '@env';
+import i18n from '../utils/i18n';
 import {
   ActivityIndicator,
   Image,
@@ -11,77 +12,92 @@ import {
   ImageBackground,
   Text,
   Button,
-  TouchableOpacity, Alert,
+  ToastAndroid,
+  TouchableOpacity,
+  Alert,
   View,
 } from 'react-native';
-import CustomBox from "react-native-customized-box";
+import CustomBox from 'react-native-customized-box';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
-import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle'
+import { showMessage, hideMessage } from 'react-native-flash-message';
+import Toast from 'react-native-toast-message';
+import { useAsyncStorage } from '../../AsyncStorageProvider';
+
+import { faCheckCircle } from '@fortawesome/free-solid-svg-icons/faCheckCircle';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 const LoginScreen = () => {
-  const [getEmailId, setEmailId] = useState("");
-  const [getPassword, setPassword] = useState("");
+  const { state, dispatch } = useAsyncStorage();
+  const [getEmailId, setEmailId] = useState('');
+  const [getPassword, setPassword] = useState('');
   const [getError, setError] = useState(false);
-  const [throwError, setThrowError] = useState("");
+  const [throwError, setThrowError] = useState('');
   const [getDisabled, setDisabled] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const { t } = useTranslation();
-  const [emailError, setEmailError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
   const handleLogin = async () => {
-    console.log(`http://${ip}:9000/api/v1/users/signin`);
     try {
-      const response = await axios.post(`http://${ip}:9000/api/v1/users/signin`, {
-        account: getEmailId,
-        password: getPassword
-      }, {
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-
-
+      console.log(`http://192.168.233.187:9000/api/v1/users/signin`);
+      const response = await axios.post(
+        `http://192.168.233.187:9000/api/v1/users/signin`,
+        {
+          account: getEmailId,
+          password: getPassword,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
 
       if (response.data) {
         // Assuming you have obtained user data after login
         const userData = response.data.data;
-        console.log(userData);
+
+        dispatch({ type: 'UPDATE_USER_DATA', payload: userData });
         // Save the user data to AsyncStorage
         await AsyncStorage.setItem('userData', JSON.stringify(userData))
           .then(() => {
             console.log('User data saved successfully');
-            setEmailId("");
-            setPassword("");
-            setPasswordError("");
-            setEmailError("");
-            navigation.navigate('Home');
+            setEmailId('');
+            setPassword('');
+            setPasswordError('');
+            setEmailError('');
+
+            ToastAndroid.showWithGravityAndOffset(
+              t('loginsuccess'),
+              ToastAndroid.LONG,
+              0,
+              250,
+              500,
+            );
+            navigation.navigate('Home', {
+              showSuccessMessage: true,
+              dsadsa: 'dsadsa',
+            });
           })
-          .catch((error) => {
+          .catch(error => {
             console.error('Error saving user data: ', error);
           });
-
-
-      }
-      else {
-
+      } else {
       }
     } catch (error) {
       setShowErrorModal(true);
     }
-
-  }
+  };
   const moveToRegister = () => {
     // Perform login logic here
 
     // Navigate to the home screen
     navigation.navigate('Register');
-
   };
 
-  const handleEmailChange = (value) => {
+  const handleEmailChange = value => {
     setEmailId(value);
     setError(false);
     setEmailError('');
@@ -89,15 +105,14 @@ const LoginScreen = () => {
     // Validate email format
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailPattern.test(value)) {
-
-      setEmailError('Please enter a valid email address.');
+      setEmailError(t('Please enter a valid email address.'));
     }
     // ... rest of the function
   };
-  const handlePasswordChange = (value) => {
+  const handlePasswordChange = value => {
     setPassword(value);
     setError(false);
-    setPasswordError("");
+    setPasswordError('');
     // Validate password complexity
     if (
       value.length < 8 ||
@@ -105,46 +120,48 @@ const LoginScreen = () => {
       !/[a-z]/.test(value) ||
       !/[!@#$%^&*?.]/.test(value)
     ) {
-
       setPasswordError(
-
-        ' Password must be at least 8 characters long,\n Contain at least one uppercase letter,\n One special character (!@#$%^&*).'
+        t('Password must be at least 8 characters long,\n Contain at least one uppercase letter,\n One special character (!@#$%^&*).')
       );
-    }
-    else {
+    } else {
       setPasswordError(
         <Text style={{ color: 'green', marginTop: '10' }}>
           Password is valid.
-          <FontAwesomeIcon style={{ color: "green" }} icon={faCheckCircle} ></FontAwesomeIcon>
-        </Text>
+          <FontAwesomeIcon
+            style={{ color: 'green' }}
+            icon={faCheckCircle}></FontAwesomeIcon>
+        </Text>,
       );
     }
   };
   return (
     <ImageBackground
       source={require('../assets/bg.png')}
-      style={styles.backgroundImage}
-    >
-      <View style={styles.container}><Text style={styles.header}>{t('loggin')}{ip}</Text>
+      style={styles.backgroundImage}>
+      <View style={styles.container}>
+        <View style={{ flexDirection: 'row', marginBottom: 20 }}>
+          <Image
+            style={styles.loginImage}
+            source={require('../assets/login.png')}
+          />
+          <Image
+            style={styles.loginImage}
+            source={require('../assets/login.png')}
+          />
+          <Image
+            style={styles.loginImage}
+            source={require('../assets/login.png')}
+          />
+        </View>
 
-        {/* <Image
-        style={styles.myLogo}
-        source={require('../assets/logo.jpg')}
-      />
-     
-      <Image
-        style={styles.loginImage}
-        source={require('../assets/loginbg.jpg')}
-      /> */}
         {getError ? (
           <View style={styles.errorCard}>
             <TouchableOpacity
               style={styles.cross}
               onPress={() => {
                 setError(false);
-              }}
-            >
-              <Text style={{ color: "white", fontWeight: "bold" }}>X</Text>
+              }}>
+              <Text style={{ color: 'white', fontWeight: 'bold' }}>X</Text>
             </TouchableOpacity>
             <Text style={styles.errorCardText}>{throwError}</Text>
           </View>
@@ -152,113 +169,110 @@ const LoginScreen = () => {
         <CustomBox
           style={{ backgroundColor: 'white' }}
           tabIndex={1}
-          placeholder={"Email"}
-          boxColor={"dodgerblue"}
-          focusColor={"#e65c40"}
+          placeholder={'Email'}
+          boxColor={'#2f94aa'}
+          focusColor={'#e65c40'}
           keyboardType="email-address"
-          boxStyle={{ borderRadius: 40, borderWidth: 2 }}
+          boxStyle={{ borderRadius: 5, borderWidth: 1 }}
           inputStyle={{
-            fontWeight: "bold",
-            color: "#30302e",
+            fontWeight: 'bold',
+            color: 'white',
             paddingLeft: 20,
             borderRadius: 40,
           }}
           labelConfig={{
-            text: "Email",
+            text: t('email'),
             style: {
-              color: "#0e0e21",
-              fontWeight: "bold",
+              color: 'white',
+              fontWeight: 'bold',
             },
           }}
           requiredConfig={{
             text: <Text style={{ color: 'black' }}>{emailError}</Text>,
           }}
           values={getEmailId}
-          onChangeText={(value) => {
-            handleEmailChange(value)
+          onChangeText={value => {
+            handleEmailChange(value);
           }}
         />
         <CustomBox
           tabIndex={2}
-          placeholder={"Password"}
+          placeholderTextColor="red"
+          placeholder={'Password'}
           toggle={true}
-          boxColor={"dodgerblue"}
-          focusColor={"#e65c40"}
-          boxStyle={{ borderRadius: 40, borderWidth: 2 }}
+          boxColor={'#2f94aa'}
+          focusColor={'#e65c40'}
+          boxStyle={{ borderRadius: 5, borderWidth: 1 }}
           inputStyle={{
-            fontWeight: "bold",
-            color: "#30302e",
+            fontWeight: 'bold',
+            color: 'white',
             paddingLeft: 20,
             borderRadius: 40,
           }}
           labelConfig={{
-            text: "Password",
+            text: t('password'),
             style: {
-              color: "#0e0e21",
-              fontWeight: "bold",
+              color: 'white',
+              fontWeight: 'bold',
             },
           }}
           requiredConfig={{
             text: <Text style={{ color: 'red' }}>{passwordError}</Text>,
           }}
           values={getPassword}
-          onChangeText={(value) => {
-            handlePasswordChange(value)
+          onChangeText={value => {
+            handlePasswordChange(value);
           }}
         />
         {/* ForgotPassword */}
         <TouchableOpacity
           style={styles.forgotBtn}
           onPress={() => {
-            navigation.navigate("ForgotPassword");
-          }}
-        >
-          <Text style={styles.forgotBtnText}>Forgot Password?</Text>
+            navigation.navigate('ForgotPassword');
+          }}>
+          <Text style={styles.forgotBtnText}>{t('ForgotPassword')}</Text>
         </TouchableOpacity>
 
         {/* Login Button */}
         <TouchableOpacity
           style={styles.loginBtn}
           onPress={handleLogin}
-          disabled={getDisabled}
-        >
-          <Text style={styles.loginBtnText}>LogIn</Text>
+          disabled={getDisabled}>
+          <Text style={styles.loginBtnText}>{t('login')}</Text>
           {loading && loading ? (
-            <ActivityIndicator style={styles.indicator} color={"white"} />
+            <ActivityIndicator style={styles.indicator} color={'white'} />
           ) : null}
         </TouchableOpacity>
-
         <Modal isVisible={showErrorModal}>
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Image
                 source={require('../assets/logginfail.png')}
-
                 style={styles.modalImage}
               />
-              <Text style={styles.modalTitle}>Login Failed</Text>
-              <Text style={styles.modalText}>Incorrect username or password. Please try again.</Text>
-              <Button title="Try Again" onPress={() => setShowErrorModal(false)} />
+              <Text style={styles.modalTitle}>{t('Login Failed')}</Text>
+              <Text style={styles.modalText}>
+                {t('Incorrect username or password. Please try again.')}
+              </Text>
+              <Button
+                title={t("Try Again")}
+                onPress={() => setShowErrorModal(false)}
+              />
             </View>
           </View>
         </Modal>
         {/* Register Button */}
         <View style={styles.createAccount}>
           <Text style={styles.createAccountText}>
-            {`Don't have an Account? `}
+            {t(`dont'thaveanaccount`)}
           </Text>
-          <TouchableOpacity
-            style={styles.registerBtn}
-            onPress={moveToRegister}
-          >
-            <Text style={styles.registerBtnText}>Register for Free!</Text>
+          <TouchableOpacity style={styles.registerBtn} onPress={moveToRegister}>
+            <Text style={styles.registerBtnText}>{t('registerforfree')}</Text>
           </TouchableOpacity>
         </View>
       </View>
     </ImageBackground>
   );
-
-
 };
 
 const styles = StyleSheet.create({
@@ -269,90 +283,91 @@ const styles = StyleSheet.create({
   },
   container: {
     alignSelf: 'center',
-    marginTop: 200,
+    width: '90%',
+    marginTop: 100,
     padding: 30,
     paddingTop: 50,
     borderRadius: 10,
-    backgroundColor: 'white',
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: '#3f4445',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   errorCard: {
     width: 300,
     height: 50,
-    backgroundColor: "#de3138",
-    justifyContent: "center",
+    backgroundColor: '#de3138',
+    justifyContent: 'center',
     paddingLeft: 15,
     borderRadius: 40,
   },
   errorCardText: {
     paddingLeft: 15,
-    color: "white",
+    color: 'white',
     fontSize: 12,
-    fontWeight: "500",
-    position: "absolute",
+    fontWeight: '500',
+    position: 'absolute',
   },
   cross: {
     width: 20,
     height: 20,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     marginTop: -20,
     left: 250,
-    position: "relative",
+    position: 'relative',
   },
   loginImage: {
     marginTop: 20,
-    width: 200,
-    height: 200,
+    width: 70,
+    height: 70,
   },
   header: {
     fontSize: 35,
-    fontWeight: "bold",
-    color: "#0e0e21",
-    textAlign: "center",
+    fontWeight: 'bold',
+    color: '#0e0e21',
+    textAlign: 'center',
     marginTop: 20,
-    textTransform: "uppercase"
+    textTransform: 'uppercase',
   },
   loginBtn: {
     marginTop: 10,
-    backgroundColor: "dodgerblue",
+    backgroundColor: '#2f94aa',
     width: 300,
     height: 50,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    flexDirection: "row",
+    borderRadius: 5,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
   },
   loginBtnText: {
-    color: "white",
+    color: 'white',
     fontSize: 22,
   },
   forgotBtn: {
     marginTop: -20,
     width: 280,
     height: 20,
-    justifyContent: "center",
+    justifyContent: 'center',
   },
   forgotBtnText: {
-    color: "#c29700",
+    color: '#c29700',
     fontSize: 12,
-    alignSelf: "flex-end",
-    textDecorationLine: "underline",
+    alignSelf: 'flex-end',
+    textDecorationLine: 'underline',
   },
   createAccount: {
     marginTop: 10,
     width: 280,
     height: 20,
-    flexDirection: "row",
+    flexDirection: 'row',
   },
   createAccountText: {
-    color: "grey",
+    color: 'white',
   },
   registerBtn: {},
   registerBtnText: {
-    color: "#e65c40",
-    textDecorationLine: "underline",
+    color: '#e65c40',
+    textDecorationLine: 'underline',
   },
   myLogo: {
     width: 100,
@@ -381,7 +396,8 @@ const styles = StyleSheet.create({
   modalText: {
     marginBottom: 20,
     textAlign: 'center',
-  }, modalImage: {
+  },
+  modalImage: {
     width: 100,
     height: 100,
     marginBottom: 20,

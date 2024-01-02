@@ -42,7 +42,7 @@ const RegisterScreen = () => {
       role: 'user',
     };
     console.log("register hadle")
-    const response = await fetch(`http://192.168.1.2:9000/api/v1/users/signup`, {
+    const response = await fetch(`http://192.168.233.187:9000/api/v1/users/signup`, {
       method: 'POST',
       body: JSON.stringify(registedData),
       headers: {

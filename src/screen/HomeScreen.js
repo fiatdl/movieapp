@@ -1,6 +1,20 @@
 import { React, useRef, useEffect, useState, useCallback } from 'react';
-import { View, Text, Image, StyleSheet, ScrollView, TouchableOpacity, FlatList, Modal, Dimensions, ImageBackground, Button } from 'react-native';
-
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  Modal,
+  Dimensions,
+  ToastAndroid,
+  ImageBackground,
+  Button,
+  Alert,
+} from 'react-native';
+import { showMessage } from 'react-native-flash-message';
 import Swiper from 'react-native-swiper';
 import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
@@ -9,29 +23,36 @@ import { height } from '@fortawesome/free-solid-svg-icons/faMugSaucer';
 import { I18nextProvider, useTranslation } from 'react-i18next';
 import { PROXY_CLOUD, PROXY_TUE_LOCAL } from '@env';
 import { ip, newip } from '@env';
-
+import { faDog } from '@fortawesome/free-solid-svg-icons/faDog';
 import i18n from '../utils/i18n';
 import Star from './Star';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { faUserLock } from '@fortawesome/free-solid-svg-icons/faUserLock'
-const HomeScreen = () => {
-  const navigation = useNavigation();
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faUserLock } from '@fortawesome/free-solid-svg-icons/faUserLock';
+import { faArrowUp } from '@fortawesome/free-solid-svg-icons/faArrowUp';
+import { faEye } from '@fortawesome/free-solid-svg-icons/faEye';
+import { useRoute } from '@react-navigation/native';
+import { useAsyncStorage } from '../../AsyncStorageProvider';
+const HomeScreen = ({ route, navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [datas, setData] = useState([]);
+  const { state, dispatch } = useAsyncStorage();
   const [userData, setUser] = useState({});
   const [flagSrc, setFlagSrc] = useState(require('../assets/engflag.png'));
   const { t } = useTranslation();
   useEffect(() => {
-    console.log(ip)
+    showMessage({
+      message: 'Login successful',
+      type: 'success',
+    });
+  }, []);
+  useEffect(() => {
     axios
-      .get(`http://${ip}:9000/api/v1/info`)
+      .get(`http://192.168.233.187:9000/api/v1/info`)
       .then(function (response) {
         setData(response.data.data);
-
-        console.log(response.data);
       })
       .catch(function (error) {
-        console.log("homescreen" + error);
+        console.log('homescreen' + error);
       });
     const retrieveUserData = async () => {
       try {
@@ -59,17 +80,17 @@ const HomeScreen = () => {
       if (flatListRef.current) {
         flatListRef.current.scrollToIndex({
           animated: true,
-          index: (currentIndex + 1) % bannerData.length,
+          index: (currentIndex + 1) % 3,
         });
-        setCurrentIndex((prevIndex) => (prevIndex + 1) % bannerData.length);
+        setCurrentIndex(prevIndex => (prevIndex + 1) % 3);
       }
-    }, 2000);
+    }, 1000);
 
     return () => clearInterval(timer);
   }, [currentIndex]);
 
   const handleLogout = () => {
-    navigation.navigate('Login',);
+    navigation.navigate('Login');
   };
 
   const bannerData = [
@@ -79,24 +100,59 @@ const HomeScreen = () => {
     // Add more banner items as needed
   ];
 
-  const handleMoviePress = (movie) => {
+  const handleMoviePress = movie => {
     navigation.navigate('MovieDetail', { movie });
   };
-  const handleMPaymentPress = (movie) => {
-    setModalVisible(!modalVisible)
+  const handleMPaymentPress = movie => {
+    setModalVisible(!modalVisible);
     navigation.navigate('Payment');
   };
   const renderBannerItem = ({ item }) => {
     return (
       <ImageBackground
         key={item._id}
-        source={{ uri: 'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' + item.filmInfo.backdrop_path }}
-        style={{ width: Dimensions.get('window').width, height: 300, margin: 10 }}
-      >
-        <View key={item._id} style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-end', width: '100%', height: '100%', padding: 10 }}>
-          <TouchableOpacity key={item._id} style={{ backgroundColor: 'orange', width: 200, height: 50, borderRadius: 10, flexDirection: 'row', justifyContent: 'center' }}>
-            <Text style={{ color: 'white', fontSize: 24, margin: 5, textTransform: 'uppercase', fontWeight: '700' }}>Watch Now</Text>
-          </TouchableOpacity></View>
+        source={{
+          uri:
+            'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' +
+            item.filmInfo.backdrop_path,
+        }}
+        style={{
+          width: Dimensions.get('window').width,
+          height: 400,
+          margin: 10,
+        }}>
+        <View
+          key={item._id}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'flex-end',
+            width: '100%',
+            height: '100%',
+            padding: 10,
+          }}>
+          <TouchableOpacity
+            key={item._id}
+            style={{
+              backgroundColor: '#2f94aa',
+              width: 200,
+              height: 50,
+              borderRadius: 10,
+              flexDirection: 'row',
+              justifyContent: 'center',
+            }}>
+            <Text
+              style={{
+                color: 'white',
+                fontSize: 24,
+                margin: 5,
+                textTransform: 'uppercase',
+                fontWeight: '700',
+              }}>
+              Watch Now
+            </Text>
+          </TouchableOpacity>
+        </View>
       </ImageBackground>
     );
   };
@@ -104,183 +160,521 @@ const HomeScreen = () => {
   const changeLanguage = () => {
     const newLanguage = i18n.language === 'en' ? 'vi' : 'en';
     i18n.changeLanguage(newLanguage);
-    setFlagSrc(newLanguage === 'en' ? require('../assets/engflag.png') : require('../assets/vnflag.png'));
+    setFlagSrc(
+      newLanguage === 'en'
+        ? require('../assets/engflag.png')
+        : require('../assets/vnflag.png'),
+    );
   };
-
-
 
   return (
     <ScrollView style={styles.container}>
-      <ImageBackground
-        source={require('../assets/title.jpg')}
-
-        style={{ flexDirection: 'row', alignItems: 'center', width: '100%', height: 150, margin: 10 }}>
-        <View style={{ flexDirection: 'column', alignItems: 'center', padding: 10, margin: 10, width: '35%' }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          width: '100%',
+          height: 100,
+          margin: 10,
+          backgroundColor: '#3f4445',
+        }}>
+        <View
+          style={{
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: 10,
+            margin: 10,
+            width: '35%',
+          }}>
           <Text style={{ color: 'white', fontSize: 20 }}>{t('welcome')}</Text>
-          <Text style={{ color: 'red', fontSize: 25 }}>CineVerse </Text>
-          <Text style={{ color: 'red', fontSize: 25 }}> Cinema</Text>
+          <Text style={{ color: '#2f94aa', fontSize: 25, fontWeight: 'bold' }}>
+            CineVerse{' '}
+          </Text>
+          <Text style={{ color: '#2f94aa', fontSize: 25, fontWeight: 'bold' }}>
+            {' '}
+            Cinema
+          </Text>
         </View>
-        <Image source={require('../imagePoster/local/logo.png')} style={styles.logo} />
-        <TouchableOpacity onPress={changeLanguage} style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginRight: 10, width: '30%' }}>
-          <Image source={i18n.language === 'en' ? require('../assets/engflag.png') : require('../assets/vnflag.png')} style={{ width: 50, height: 50, borderRadius: 8 }} />
-
+        <Image
+          source={require('../imagePoster/local/logo.png')}
+          style={styles.logo}
+        />
+        <TouchableOpacity
+          onPress={changeLanguage}
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginRight: 10,
+            width: '30%',
+          }}>
+          <Image
+            source={
+              i18n.language === 'en'
+                ? require('../assets/engflag.png')
+                : require('../assets/vnflag.png')
+            }
+            style={{ width: 50, height: 50, borderRadius: 8 }}
+          />
         </TouchableOpacity>
+      </View>
+      <View style={{ height: 1, width: '100%', backgroundColor: 'white' }} />
 
-      </ImageBackground>
-      <View style={{ height: 1, width: "100%", backgroundColor: 'white' }} />
-
-      <View style={{
-        width: '100%', flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}>
+      <View
+        style={{
+          width: '100%',
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
         {datas.length > 0 ? (
           <FlatList
             ref={flatListRef}
             data={datas}
             renderItem={renderBannerItem}
-            style={{ width: '95%', height: '80%', marginBottom: 10 }}
+            style={{ width: '95%', height: 400, marginBottom: 10 }}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            getItemLayout={(data, index) => (
-              { length: 1000, offset: Dimensions.get('window').width * index, index }
-            )}
-            onScrollToIndexFailed={(info) => {
-              const wait = new Promise((resolve) => setTimeout(resolve, 500));
+            getItemLayout={(data, index) => ({
+              length: 1000,
+              offset: Dimensions.get('window').width * index,
+              index,
+            })}
+            onScrollToIndexFailed={info => {
+              const wait = new Promise(resolve => setTimeout(resolve, 500));
               wait.then(() => {
-                flatListRef.current?.scrollToIndex({ index: info.index, animated: true });
+                flatListRef.current?.scrollToIndex({
+                  index: info.index,
+                  animated: true,
+                });
               });
             }}
           />
-        ) : (<Text>loadding</Text>)}
-        <View style={{ height: 1, width: "100%", backgroundColor: 'white' }} />
-
+        ) : (
+          <Text>loadding</Text>
+        )}
+        <View style={{ height: 1, width: '100%', backgroundColor: 'white' }} />
       </View>
-      <View style={{ height: 1, width: "100%", backgroundColor: 'white' }} />
+      <View style={{ height: 1, width: '100%', backgroundColor: 'white' }} />
       <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>{t('popular')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-
-          {datas.length > 0 ? (datas.map((movie) => (
-            <TouchableOpacity
-              key={movie._id}
-              style={styles.movieContainer}
-              onPress={() => handleMoviePress(movie)}
-            >
-              <ImageBackground source={{ uri: 'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' + movie.filmInfo.backdrop_path }} style={{
-                width: 180,
-                height: 220,
-                resizeMode: 'cover',
-                borderRadius: 10
-              }} >
-
-                {(movie.primaryTag && (<View style={{ width: '100%', height: 40, backgroundColor: 'red', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', padding: 5 }}>
-                  <Text style={{
-                    fontSize: 17,
-                    width: '100%',
-                    textTransform: 'uppercase',
-                    overflow: 'hidden',
-                    fontWeight: 'bold', color: 'black'
-                  }}>{movie.primaryTag ? "      primary " : "no "}
-                    <FontAwesomeIcon style={{
-                      fontSize: 17,
-                      width: '100%',
-                      textTransform: 'uppercase',
-                      overflow: 'hidden',
-                      fontWeight: 'bold', color: 'black'
-                    }} icon={faUserLock} /> </Text>
-                </View>))
-                }
-
-
-              </ImageBackground>
-              <View key={movie._id} style={styles.movieDetails}>
-
-                <View style={{ flexDirection: 'row' }}>
-                  <Text style={styles.title}>{movie.filmInfo.title ? movie.filmInfo.title : movie.filmInfo.name} {t("rate")}</Text>
-                  <Text style={styles.genre}>{movie.filmInfo.vote_count} {t("rate")}</Text>
+          {datas.length > 0 ? (
+            datas.sort((a, b) => b.filmInfo.popularity - a.filmInfo.popularity).slice(0, Math.min(datas.length, 10)).map(movie => (
+              <TouchableOpacity
+                key={movie._id}
+                style={styles.movieContainer}
+                onPress={() => handleMoviePress(movie)}>
+                <ImageBackground
+                  source={{
+                    uri:
+                      'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' +
+                      movie.filmInfo.backdrop_path,
+                  }}
+                  style={{
+                    width: 180,
+                    height: 220,
+                    resizeMode: 'cover',
+                    borderRadius: 10,
+                  }}>
+                  {movie.primaryTag && (
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 40,
+                        backgroundColor: 'red',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 5,
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 17,
+                          width: '100%',
+                          textTransform: 'uppercase',
+                          overflow: 'hidden',
+                          fontWeight: 'bold',
+                          color: 'black',
+                        }}>
+                        {movie.primaryTag ? t('primium') : 'no '}
+                        <FontAwesomeIcon
+                          style={{
+                            fontSize: 17,
+                            width: '100%',
+                            textTransform: 'uppercase',
+                            overflow: 'hidden',
+                            fontWeight: 'bold',
+                            color: 'black',
+                          }}
+                          icon={faUserLock}
+                        />{' '}
+                      </Text>
+                    </View>
+                  )}
+                </ImageBackground>
+                <View key={movie._id} style={styles.movieDetails}>
+                  <View style={{ flexDirection: 'row', width: '100%' }}>
+                    <Text style={styles.title}>
+                      {movie.filmInfo.title
+                        ? movie.filmInfo.title
+                        : movie.filmInfo.name}{' '}
+                      {t('rate')}
+                    </Text>
+                    <Text style={styles.genre}>
+                      {movie.filmInfo.popularity}{' '}
+                      <FontAwesomeIcon
+                        style={{ color: 'white', fontSize: 20, margin: 10 }}
+                        icon={faArrowUp}
+                      />
+                    </Text>
+                  </View>
                 </View>
-
-              </View>
-            </TouchableOpacity>
-          ))) : (<Text>loadding</Text>)}
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text>loadding</Text>
+          )}
         </ScrollView>
 
         {/* Add more sections as needed */}
       </View>
-      <View style={{ height: 1, width: "100%", backgroundColor: 'white' }} />
-      <View style={{ padding: 10 }}>
-        <Text style={styles.sectionTitle}>{t('tv show')}</Text>
+      <View style={styles.contentContainer}>
+        <Text style={styles.sectionTitle}>{t('mostview')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {datas.length > 0 ? (datas.filter((x) => x.filmType === "TV").map((movie) => (
-            <TouchableOpacity
-              key={movie._id}
-              style={styles.movieContainer}
-              onPress={() => handleMoviePress(movie)}
-            >
-              <Image source={{ uri: 'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' + movie.filmInfo.backdrop_path }} style={styles.poster} />
-              <View key={movie.id} style={styles.movieDetails}>
-                <Text style={styles.title}>{movie.filmInfo.name}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: "space-between" }}>
-                  <Star rating={movie.filmInfo.vote_average / 2} />
-                  <Text style={styles.genre}>{movie.filmInfo.vote_count} {t("rate")}</Text>
+          {datas.length > 0 ? (
+            datas.sort((a, b) => b.filmInfo.vote_count - a.filmInfo.vote_count).slice(0, Math.min(datas.length, 10)).map(movie => (
+              <TouchableOpacity
+                key={movie._id}
+                style={styles.movieContainer}
+                onPress={() => handleMoviePress(movie)}>
+                <ImageBackground
+                  source={{
+                    uri:
+                      'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' +
+                      movie.filmInfo.backdrop_path,
+                  }}
+                  style={{
+                    width: 180,
+                    height: 220,
+                    resizeMode: 'cover',
+                    borderRadius: 10,
+                  }}>
+                  {movie.primaryTag && (
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 40,
+                        backgroundColor: 'red',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 5,
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 17,
+                          width: '100%',
+                          textTransform: 'uppercase',
+                          overflow: 'hidden',
+                          fontWeight: 'bold',
+                          color: 'black',
+                        }}>
+                        {movie.primaryTag ? t('primium') : 'no '}
+                        <FontAwesomeIcon
+                          style={{
+                            fontSize: 17,
+                            width: '100%',
+                            textTransform: 'uppercase',
+                            overflow: 'hidden',
+                            fontWeight: 'bold',
+                            color: 'black',
+                          }}
+                          icon={faUserLock}
+                        />{' '}
+                      </Text>
+                    </View>
+                  )}
+                </ImageBackground>
+                <View key={movie._id} style={styles.movieDetails}>
+                  <View style={{ flexDirection: 'row', width: '100%' }}>
+                    <Text style={styles.title}>
+                      {movie.filmInfo.title
+                        ? movie.filmInfo.title
+                        : movie.filmInfo.name}{' '}
+                      {t('rate')}
+                    </Text>
+                    <Text style={styles.genre}>
+                      {movie.filmInfo.popularity}{' '}
+                      <FontAwesomeIcon
+                        style={{ color: 'white', fontSize: 20, margin: 10 }}
+                        icon={faEye}
+                      />
+                    </Text>
+                  </View>
                 </View>
-
-              </View>
-            </TouchableOpacity>
-          ))) : (<Text>loadding</Text>)}
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text>loadding</Text>
+          )}
         </ScrollView>
+
+        {/* Add more sections as needed */}
       </View>
-      <View style={{ height: 1, width: "100%", backgroundColor: 'white' }} />
-      <View style={{ padding: 10 }}>
+      <View style={{ height: 1, width: '100%', backgroundColor: 'white' }} />
+      <View style={styles.contentContainer}>
+        <Text style={styles.sectionTitle}>{t('tvshow')}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {datas.length > 0 ? (
+            datas.filter(x => x.filmType === 'TV').map(movie => (
+              <TouchableOpacity
+                key={movie._id}
+                style={styles.movieContainer}
+                onPress={() => handleMoviePress(movie)}>
+                <ImageBackground
+                  source={{
+                    uri:
+                      'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' +
+                      movie.filmInfo.backdrop_path,
+                  }}
+                  style={{
+                    width: 180,
+                    height: 220,
+                    resizeMode: 'cover',
+                    borderRadius: 10,
+                  }}>
+                  {movie.primaryTag && (
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 40,
+                        backgroundColor: 'red',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 5,
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 17,
+                          width: '100%',
+                          textTransform: 'uppercase',
+                          overflow: 'hidden',
+                          fontWeight: 'bold',
+                          color: 'black',
+                        }}>
+                        {movie.primaryTag ? t('primium') : 'no '}
+                        <FontAwesomeIcon
+                          style={{
+                            fontSize: 17,
+                            width: '100%',
+                            textTransform: 'uppercase',
+                            overflow: 'hidden',
+                            fontWeight: 'bold',
+                            color: 'black',
+                          }}
+                          icon={faUserLock}
+                        />{' '}
+                      </Text>
+                    </View>
+                  )}
+                </ImageBackground>
+                <View key={movie._id} style={styles.movieDetails}>
+                  <View style={{ flexDirection: 'row', width: '100%' }}>
+                    <Text style={styles.title}>
+                      {movie.filmInfo.title
+                        ? movie.filmInfo.title
+                        : movie.filmInfo.name}{' '}
+                      {t('rate')}
+                    </Text>
+                    <Text style={styles.genre}>
+                      {movie.filmInfo.popularity}{' '}
+                      <FontAwesomeIcon
+                        style={{ color: 'white', fontSize: 20, margin: 10 }}
+                        icon={faEye}
+                      />
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text>loadding</Text>
+          )}
+        </ScrollView>
+
+        {/* Add more sections as needed */}
+      </View>
+      <View style={{ height: 1, width: '100%', backgroundColor: 'white' }} />
+      <View style={styles.contentContainer}>
         <Text style={styles.sectionTitle}>{t('movie')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {datas.length > 0 ? (datas.filter((x) => x.filmType === "Movie").map((movie) => (
-            <TouchableOpacity
-              key={movie._id}
-              style={styles.movieContainer}
-              onPress={() => handleMoviePress(movie)}
-            >
-              <Image source={{ uri: 'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' + movie.filmInfo.backdrop_path }} style={styles.poster} />
-              <View key={movie.id} style={styles.movieDetails}>
-                {/* <Text style={styles.title}>{movie.filmInfo.title}</Text> */}
-                <Text style={styles.title}>{movie.filmInfo.primaryTag ? "true" : "false"}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: "space-between" }}>
-                  <Star rating={movie.filmInfo.vote_average / 2} />
-                  <Text style={styles.genre}>{movie.filmInfo.vote_count} {t("rate")}</Text>
+          {datas.length > 0 ? (
+            datas.filter(x => x.filmType === 'Movie').map(movie => (
+              <TouchableOpacity
+                key={movie._id}
+                style={styles.movieContainer}
+                onPress={() => handleMoviePress(movie)}>
+                <ImageBackground
+                  source={{
+                    uri:
+                      'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' +
+                      movie.filmInfo.backdrop_path,
+                  }}
+                  style={{
+                    width: 180,
+                    height: 220,
+                    resizeMode: 'cover',
+                    borderRadius: 10,
+                  }}>
+                  {movie.primaryTag && (
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 40,
+                        backgroundColor: 'red',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 5,
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 17,
+                          width: '100%',
+                          textTransform: 'uppercase',
+                          overflow: 'hidden',
+                          fontWeight: 'bold',
+                          color: 'black',
+                        }}>
+                        {movie.primaryTag ? t('primium') : 'no '}
+                        <FontAwesomeIcon
+                          style={{
+                            fontSize: 17,
+                            width: '100%',
+                            textTransform: 'uppercase',
+                            overflow: 'hidden',
+                            fontWeight: 'bold',
+                            color: 'black',
+                          }}
+                          icon={faUserLock}
+                        />{' '}
+                      </Text>
+                    </View>
+                  )}
+                </ImageBackground>
+                <View key={movie._id} style={styles.movieDetails}>
+                  <View style={{ flexDirection: 'row', width: '100%' }}>
+                    <Text style={styles.title}>
+                      {movie.filmInfo.title
+                        ? movie.filmInfo.title
+                        : movie.filmInfo.name}{' '}
+                      {t('rate')}
+                    </Text>
+                    <Text style={styles.genre}>
+                      {movie.filmInfo.popularity}{' '}
+                      <FontAwesomeIcon
+                        style={{ color: 'white', fontSize: 20, margin: 10 }}
+                        icon={faEye}
+                      />
+                    </Text>
+                  </View>
                 </View>
-
-              </View>
-            </TouchableOpacity>
-          ))) : (<Text>loadding</Text>)}
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text>loadding</Text>
+          )}
         </ScrollView>
 
+        {/* Add more sections as needed */}
       </View>
-      <View style={{ height: 1, width: "100%", backgroundColor: 'white' }} />
-      <View style={{ padding: 10 }}>
-        <Text style={styles.sectionTitle}>{t('continue watching')}</Text>
+      <View style={{ height: 1, width: '100%', backgroundColor: 'white' }} />
+      <View style={styles.contentContainer}>
+        <Text style={styles.sectionTitle}>{t('continuewatching')}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {datas.length > 0 ? (datas.filter((x) => x.filmType === "TV").map((movie) => (
-            <TouchableOpacity
-              key={movie._id}
-              style={styles.movieContainer}
-              onPress={() => handleMoviePress(movie)}
-            >
-              <Image source={{ uri: 'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' + movie.filmInfo.backdrop_path }} style={styles.poster} />
-              <View key={movie.id} style={styles.movieDetails}>
-                <Text style={styles.title}>{movie.filmInfo.title}</Text>
-                <View style={{ flexDirection: 'row', justifyContent: "space-between" }}>
-                  <Star rating={movie.filmInfo.vote_average / 2} />
-                  <Text style={styles.genre}>{movie.filmInfo.vote_count} {t("rate")}</Text>
+          {datas.length > 0 ? (
+            datas.filter(x => x.filmType === 'TV').map(movie => (
+              <TouchableOpacity
+                key={movie._id}
+                style={styles.movieContainer}
+                onPress={() => handleMoviePress(movie)}>
+                <ImageBackground
+                  source={{
+                    uri:
+                      'https://image.tmdb.org/t/p/w600_and_h900_bestv2/' +
+                      movie.filmInfo.backdrop_path,
+                  }}
+                  style={{
+                    width: 180,
+                    height: 220,
+                    resizeMode: 'cover',
+                    borderRadius: 10,
+                  }}>
+                  {movie.primaryTag && (
+                    <View
+                      style={{
+                        width: '100%',
+                        height: 40,
+                        backgroundColor: 'red',
+                        flexDirection: 'row',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        padding: 5,
+                      }}>
+                      <Text
+                        style={{
+                          fontSize: 17,
+                          width: '100%',
+                          textTransform: 'uppercase',
+                          overflow: 'hidden',
+                          fontWeight: 'bold',
+                          color: 'black',
+                        }}>
+                        {movie.primaryTag ? t('primium') : 'no '}
+                        <FontAwesomeIcon
+                          style={{
+                            fontSize: 17,
+                            width: '100%',
+                            textTransform: 'uppercase',
+                            overflow: 'hidden',
+                            fontWeight: 'bold',
+                            color: 'black',
+                          }}
+                          icon={faUserLock}
+                        />{' '}
+                      </Text>
+                    </View>
+                  )}
+                </ImageBackground>
+                <View key={movie._id} style={styles.movieDetails}>
+                  <View style={{ flexDirection: 'row', width: '100%' }}>
+                    <Text style={styles.title}>
+                      {movie.filmInfo.title
+                        ? movie.filmInfo.title
+                        : movie.filmInfo.name}{' '}
+                      {t('rate')}
+                    </Text>
+                    <Text style={styles.genre}>
+                      {movie.filmInfo.popularity}{' '}
+                      <FontAwesomeIcon
+                        style={{ color: 'white', fontSize: 20, margin: 10 }}
+                        icon={faEye}
+                      />
+                    </Text>
+                  </View>
                 </View>
-
-              </View>
-            </TouchableOpacity>
-          ))) : (<Text>loadding</Text>)}
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text>loadding</Text>
+          )}
         </ScrollView>
-      </View>
 
+        {/* Add more sections as needed */}
+      </View>
     </ScrollView>
   );
 };
@@ -293,8 +687,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
   },
   logo: {
-    width: '33%',
-    height: '100%',
+    width: '20%',
+    height: '70%',
     resizeMode: 'contain',
     alignSelf: 'center',
     marginTop: 16,
@@ -303,8 +697,7 @@ const styles = StyleSheet.create({
   banner: {
     height: 200,
 
-
-    backgroundColor: '#FFFFFF'
+    backgroundColor: '#FFFFFF',
   },
   bannerImage: {
     flex: 1,
@@ -318,7 +711,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 8,
-    textTransform: 'uppercase'
+    textTransform: 'uppercase',
   },
   movieContainer: {
     margin: 10,
@@ -333,19 +726,19 @@ const styles = StyleSheet.create({
     height: 220,
     resizeMode: 'cover',
     borderRadius: 10,
-    padding: 10
+    padding: 10,
   },
   movieDetails: {
     width: '100%',
     height: '100%',
 
     marginTop: 8,
-    padding: 3
+    padding: 3,
   },
   title: {
     color: 'orange',
     fontSize: 17,
-    width: '70%',
+    width: '60%',
     textTransform: 'uppercase',
     overflow: 'hidden',
     fontWeight: 'bold',
@@ -354,9 +747,14 @@ const styles = StyleSheet.create({
   },
   genre: {
     fontSize: 14,
+    flexDirection: 'row',
+    height: 30,
+    alignItems: 'center',
+    backgroundColor: '#2f94aa',
+    padding: 3,
+    borderRadius: 3,
     color: '#fff',
-    margin: 4
-
+    margin: 4,
   },
   modalContainer: {
     position: 'absolute',
@@ -395,8 +793,6 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 3,
     display: 'flex',
-
-
   },
 });
 
